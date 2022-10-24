@@ -61,21 +61,23 @@ func (h *handlerAuth) Register(w http.ResponseWriter, r *http.Request) {
 		Role:     request.Role,
 	}
 
-	RegisterResponse := authdto.PegisterResponse{
-		Name: user.Name,
-		Role: user.Role,
+	data, err := h.AuthRepository.Register(user)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		response := dto.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}
+		json.NewEncoder(w).Encode(response)
 	}
 
-	// data, err := h.AuthRepository.Register(user)
-	// if err != nil {
-	// 	w.WriteHeader(http.StatusInternalServerError)
-	// 	response := dto.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}
-	// 	json.NewEncoder(w).Encode(response)
-	// }
-
 	w.WriteHeader(http.StatusOK)
-	response := dto.SuccessResult{Code: "success", Data: RegisterResponse}
+	response := dto.SuccessResult{Code: "success", Data: convertRegisterResponse(data)}
 	json.NewEncoder(w).Encode(response)
+}
+
+func convertRegisterResponse(u models.User) authdto.PegisterResponse {
+	return authdto.PegisterResponse{
+		Name: u.Name,
+		Role: u.Role,
+	}
 }
 
 func (h *handlerAuth) Login(w http.ResponseWriter, r *http.Request) {
